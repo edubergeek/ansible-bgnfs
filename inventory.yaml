@@ -1,0 +1,6 @@
+clients:
+  hosts:
+    k8s-lb10:
+      mountpath: "/"
+      mountdirs:
+        - { "dir": [ "nahoku" ] }

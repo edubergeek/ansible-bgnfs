@@ -1,0 +1,17 @@
+---
+- name: Beegfs client
+  hosts: clients
+  become: yes
+  tasks:
+    - name: Start the beegfs client service
+      shell:
+        cmd: "systemctl start beegfs-client"
+
+    - name: Install the fstab mount entry
+      shell:
+        cmd: "systemctl start beegfs-client"
+
+    - name: Mount the beegfs file system
+      shell:
+        cmd: "systemctl start beegfs-client"
+

@@ -1,0 +1,16 @@
+- name: Beegfs helperd
+  hosts: clients
+  become: yes
+  tasks:
+    - name: Start the helperd daemon
+      shell:
+        cmd: "systemctl stop beegfs-helperd"
+
+- name: Beegfs client
+  hosts: clients
+  become: yes
+  tasks:
+    - name: Start the meta docker container
+      shell:
+        cmd: "systemctl stop beegfs-client"
+

@@ -1,0 +1,115 @@
+- name: Beegfs storage client
+  hosts: clients
+  become: yes
+  tasks:
+    - name: Create mount directories e.g. for beegfs client
+      file:
+        path: "/{{ hostvars[inventory_hostname].mountpath }}/{{ item.dir }}"
+        state: directory
+        mode: '0755'
+      with_items: "{{ hostvars[inventory_hostname].mountdirs }}"
+#      when: item.type == "MOUNT"
+
+    - name: Download the Beegfs GPG key
+      get_url:
+        url: "https://www.beegfs.io/release/beegfs_{{ beegfs_version }}/gpg/GPG-KEY-beegfs"
+        dest: /etc/apt/trusted.gpg.d/beegfs.asc
+        mode: '0644'
+#        checksum: ""
+
+#    - name: Dearmor the Beegfs GPG key
+#      command:
+#        cmd: "gpg --dearmor /etc/apt/trusted.gpg.d/beegfs.asc"
+#        creates: /usr/shared/keyrings/beegfs.gpg
+#
+#    - name: Install the InfluxDB GPG key
+#      command:
+#        cmd: "mv /tmp/influxdata-archive_compat.gpg /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg"
+#        creates: /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg
+#
+    - name: Set up Beegfs repository
+      get_url:
+        url: "https://www.beegfs.io/release/beegfs_{{ beegfs_version }}/dists/beegfs-{{ ansible_distribution_release }}.list"
+        dest: /etc/apt/sources.list.d/beegfs.list
+        mode: '0644'
+#      apt_repository:
+#        repo: deb [signed-by=/usr/shared/keyrings/beegfs.gpg] https://repos.influxdata.com/debian stable main
+#        state: present
+#        filename: influxdata
+
+    - name: Update APT package index after adding Influxdb repository
+      apt:
+        update_cache: yes
+        cache_valid_time: 0
+
+    - name: Install beegfs-client and utilities
+      apt:
+        name: 
+          - beegfs-tools
+          - beegfs-utils
+          - beegfs-client-dkms
+        force_apt_get: true
+        state: present
+
+    - name: Preconfigure beegfs-client
+      command:
+        cmd: "/opt/beegfs/sbin/beegfs-setup-client -m {{ beegfs_mgmt }}"
+        creates: /etc/beegfs/beegfs-client.conf
+
+    - name: Copy mount configuration
+      copy:
+        src: files/beegfs-mounts.conf
+        dest: /etc/beegfs
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Copy client configuration
+      copy:
+        src: files/beegfs-client.conf
+        dest: /etc/beegfs
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Copy security configuration
+      copy:
+        src: files/conn.auth
+        dest: /etc/beegfs
+        owner: root
+        group: root
+        mode: '0600'
+
+    - name: Remove existing beegfs firewall rules for TCP
+      ufw:
+        rule: allow
+        port: 8003:8010
+        proto: tcp
+        delete: true
+
+    - name: Remove existing beegfs firewall rules for UDP
+      ufw:
+        rule: allow
+        port: 8003:8010
+        proto: udp
+        delete: true
+
+    - name: Add beegfs firewall rules for TCP
+      ufw:
+        rule: allow
+        port: 8003:8010
+        proto: tcp
+        src: '{{ item }}'
+      loop:
+        - 10.88.0.0/16
+        - 10.19.0.0/16
+
+    - name: Add beegfs firewall rules for UDP
+      ufw:
+        rule: allow
+        port: 8003:8010
+        proto: udp
+        src: '{{ item }}'
+      loop:
+        - 10.88.0.0/16
+        - 10.19.0.0/16
