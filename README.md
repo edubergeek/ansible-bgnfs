@@ -11,7 +11,7 @@ Deploy a beegfs client compatible with [Ansible Beegfs Service using Docker Comp
 - beegfs-prep.yaml
     - Install all prerequisites for Beegfs client
 ```
-      ansible-playbook -i inventory.yaml nfs-prep.yaml)
+      ansible-playbook -i inventory.yaml nfs-prep.yaml
 ```
 - beegfs-client.yaml
     - Install the Beegfs client
